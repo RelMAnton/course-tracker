@@ -111,6 +111,23 @@ body{
 }
 .weekly-btn.done{background:var(--amber);color:#fff;}
 
+.day-nav{
+  display:flex;align-items:center;gap:10px;margin-bottom:14px;
+}
+.day-nav-btn{
+  width:34px;height:34px;border-radius:9px;border:1px solid var(--border);
+  background:var(--surface);display:flex;align-items:center;justify-content:center;
+  font-size:15px;cursor:pointer;color:var(--ink);flex-shrink:0;
+}
+.day-nav-btn:active{background:var(--surface2);}
+.day-nav-btn.disabled{opacity:0.35;pointer-events:none;}
+.day-nav-label{
+  flex:1;text-align:center;font-weight:600;font-size:14px;
+}
+.day-nav-today{
+  font-size:11px;color:var(--sage);font-weight:600;cursor:pointer;
+  white-space:nowrap;
+}
 .empty{
   text-align:center;padding:60px 20px;color:var(--muted);
 }
@@ -215,6 +232,20 @@ let LOG = loadLog(); // { itemId: [ 'YYYY-MM-DD', ... ] }
 function todayStr(){
   return new Date().toISOString().slice(0,10);
 }
+let currentViewDate = todayStr();
+function shiftDate(dateStr, delta){
+  const d = new Date(dateStr+'T00:00:00');
+  d.setDate(d.getDate()+delta);
+  return d.toISOString().slice(0,10);
+}
+function fmtDateLong(d){
+  const dt = new Date(d+'T00:00:00');
+  const isToday = d === todayStr();
+  const isYesterday = d === shiftDate(todayStr(), -1);
+  if(isToday) return 'Сегодня, ' + dt.toLocaleDateString('ru-RU', {day:'numeric', month:'long'});
+  if(isYesterday) return 'Вчера, ' + dt.toLocaleDateString('ru-RU', {day:'numeric', month:'long'});
+  return dt.toLocaleDateString('ru-RU', {weekday:'short', day:'numeric', month:'long'});
+}
 function isoWeek(dateStr){
   const d = new Date(dateStr+'T00:00:00');
   const day = (d.getDay()+6)%7; // mon=0
@@ -263,12 +294,29 @@ function showToast(msg){
 }
 
 // ── Today tab ─────────────────────────────────────────────
+function shiftView(delta){
+  currentViewDate = shiftDate(currentViewDate, delta);
+  renderToday();
+}
+function jumpToToday(){
+  currentViewDate = todayStr();
+  renderToday();
+}
 function renderToday(){
   const el = document.getElementById('tab-today');
-  const today = todayStr();
-  const active = ITEMS.filter(i => isActive(i, today));
+  const viewDate = currentViewDate;
+  const isFuture = viewDate >= todayStr(); // don't allow navigating past today
+  const nav = `
+    <div class="day-nav">
+      <div class="day-nav-btn" onclick="shiftView(-1)">‹</div>
+      <div class="day-nav-label">${fmtDateLong(viewDate)}</div>
+      <div class="day-nav-btn ${isFuture?'disabled':''}" onclick="shiftView(1)">›</div>
+      ${viewDate !== todayStr() ? `<div class="day-nav-today" onclick="jumpToToday()">Сегодня</div>` : ''}
+    </div>`;
+
+  const active = ITEMS.filter(i => isActive(i, viewDate));
   if(active.length === 0){
-    el.innerHTML = `<div class="empty"><div class="empty-icon">🌿</div>Сегодня курс ещё не начался<br>или уже завершён</div>`;
+    el.innerHTML = nav + `<div class="empty"><div class="empty-icon">🌿</div>В этот день курс ещё не начался<br>или уже завершён</div>`;
     return;
   }
   const daily = active.filter(i => i.freq === 'daily');
@@ -277,10 +325,10 @@ function renderToday(){
   if(daily.length){
     html += `<div class="section-label">Ежедневно</div>`;
     daily.forEach(i => {
-      const done = isMarked(i, today);
+      const done = isMarked(i, viewDate);
       html += `
       <div class="card"><div class="card-row">
-        <div class="check ${done?'done':''}" onclick="toggleMark(ITEMS.find(x=>x.id==='${i.id}'), '${today}')">${done?'✓':''}</div>
+        <div class="check ${done?'done':''}" onclick="toggleMark(ITEMS.find(x=>x.id==='${i.id}'), '${viewDate}')">${done?'✓':''}</div>
         <div class="card-body">
           <div class="card-title">${i.name}</div>
           <div class="card-sub">${i.note}</div>
@@ -291,18 +339,18 @@ function renderToday(){
   if(weekly.length){
     html += `<div class="section-label">Раз в неделю</div>`;
     weekly.forEach(i => {
-      const done = isMarked(i, today);
+      const done = isMarked(i, viewDate);
       html += `
       <div class="card"><div class="card-row">
         <div class="card-body">
           <div class="card-title">${i.name}</div>
           <div class="card-sub">${i.note}</div>
         </div>
-        <div class="weekly-btn ${done?'done':''}" onclick="toggleMark(ITEMS.find(x=>x.id==='${i.id}'), '${today}')">${done?'Сделано':'Отметить'}</div>
+        <div class="weekly-btn ${done?'done':''}" onclick="toggleMark(ITEMS.find(x=>x.id==='${i.id}'), '${viewDate}')">${done?'Сделано':'Отметить'}</div>
       </div></div>`;
     });
   }
-  el.innerHTML = html;
+  el.innerHTML = nav + html;
 }
 
 // ── Progress tab ──────────────────────────────────────────
