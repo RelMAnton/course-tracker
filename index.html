@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#FAF7F2">
+<title>Курс</title>
+<link rel="manifest" href="manifest.json">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root{
+  --bg:#FAF7F2;
+  --surface:#FFFFFF;
+  --surface2:#F2EEE6;
+  --border:#E4DFD2;
+  --ink:#2B2A28;
+  --muted:#8A8579;
+  --sage:#5E7F62;
+  --sage-light:#E4EDE3;
+  --amber:#C1863E;
+  --amber-light:#F3E7D6;
+  --danger:#B85C4B;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.header{
+  padding:18px 20px 14px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.mark{
+  width:40px;height:40px;border-radius:10px;
+  background:var(--sage);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Fraunces',serif;font-weight:700;font-size:18px;color:#fff;
+  flex-shrink:0;
+}
+.header-info h1{
+  font-family:'Fraunces',serif;
+  font-size:19px;font-weight:700;letter-spacing:-0.2px;
+}
+.header-info p{
+  font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;
+  margin-top:2px;
+}
+.header-actions{margin-left:auto;display:flex;gap:8px;}
+.icon-btn{
+  width:36px;height:36px;border-radius:9px;border:1px solid var(--border);
+  background:var(--surface);display:flex;align-items:center;justify-content:center;
+  font-size:16px;cursor:pointer;color:var(--muted);
+}
+.icon-btn:active{background:var(--surface2);}
+
+.tabs{
+  display:flex;background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 12px;
+}
+.tab{
+  flex:1;text-align:center;padding:12px 4px;font-size:13px;font-weight:600;
+  color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;
+}
+.tab.active{color:var(--sage);border-bottom-color:var(--sage);}
+
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg);}
+.section{padding:16px 16px 90px;}
+.section-label{
+  font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);
+  font-weight:600;margin:18px 0 8px;
+}
+.section-label:first-child{margin-top:0;}
+
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:14px 16px;margin-bottom:10px;
+}
+.card-row{display:flex;align-items:center;gap:12px;}
+.check{
+  width:30px;height:30px;border-radius:50%;border:2px solid var(--sage);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:15px;color:transparent;transition:all .15s;
+}
+.check.done{background:var(--sage);color:#fff;}
+.check.amber{border-color:var(--amber);}
+.check.amber.done{background:var(--amber);}
+.card-body{flex:1;min-width:0;}
+.card-title{font-weight:600;font-size:15px;}
+.card-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.card-days{
+  font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);
+  white-space:nowrap;
+}
+.weekly-btn{
+  font-size:12px;font-weight:600;color:var(--amber);
+  border:1px solid var(--amber);background:var(--amber-light);
+  padding:6px 10px;border-radius:8px;cursor:pointer;white-space:nowrap;
+}
+.weekly-btn.done{background:var(--amber);color:#fff;}
+
+.empty{
+  text-align:center;padding:60px 20px;color:var(--muted);
+}
+.empty-icon{font-size:36px;margin-bottom:10px;}
+
+/* Progress tab */
+.prog-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:16px;margin-bottom:12px;
+}
+.prog-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+.prog-title{font-weight:600;font-size:14px;}
+.prog-frac{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);}
+.blister{
+  display:flex;flex-wrap:wrap;gap:4px;
+}
+.pill{
+  width:9px;height:16px;border-radius:5px;background:var(--surface2);
+  border:1px solid var(--border);flex-shrink:0;
+}
+.pill.filled{background:var(--sage);border-color:var(--sage);}
+.pill.filled.amber{background:var(--amber);border-color:var(--amber);}
+.prog-sub{font-size:11px;color:var(--muted);margin-top:8px;}
+
+/* Journal */
+.journal-day{margin-bottom:16px;}
+.journal-date{
+  font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);
+  margin-bottom:6px;
+}
+.journal-item{
+  display:flex;align-items:center;gap:10px;background:var(--surface);
+  border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:6px;
+}
+.journal-dot{width:8px;height:8px;border-radius:50%;background:var(--sage);flex-shrink:0;}
+.journal-dot.amber{background:var(--amber);}
+.journal-text{flex:1;font-size:13px;}
+.journal-del{color:var(--muted);cursor:pointer;font-size:14px;padding:4px;}
+
+.toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:#fff;padding:10px 18px;border-radius:20px;
+  font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;
+}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="mark">Rx</div>
+  <div class="header-info">
+    <h1>Курс</h1>
+    <p id="dateRange">1 авг — 1 дек 2026</p>
+  </div>
+  <div class="header-actions">
+    <div class="icon-btn" onclick="exportData()" title="Экспорт">⤓</div>
+    <label class="icon-btn" for="importFile" title="Импорт">⤒</label>
+    <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)">
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="today" onclick="switchTab('today')">Сегодня</div>
+  <div class="tab" data-tab="progress" onclick="switchTab('progress')">Курс</div>
+  <div class="tab" data-tab="journal" onclick="switchTab('journal')">Журнал</div>
+</div>
+
+<div class="content">
+  <div class="section" id="tab-today"></div>
+  <div class="section" id="tab-progress" style="display:none"></div>
+  <div class="section" id="tab-journal" style="display:none"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Course definition ──────────────────────────────────────
+const ITEMS = [
+  {id:'aroma',   name:'Aroma SE',      note:'раз в неделю', cat:'shampoo', freq:'weekly', start:'2026-08-01', end:'2026-12-01'},
+  {id:'pirolam', name:'Pirolam',       note:'раз в неделю', cat:'shampoo', freq:'weekly', start:'2026-08-01', end:'2026-12-01'},
+  {id:'dsd',     name:'DSD',          note:'раз в день',   cat:'shampoo', freq:'daily',  start:'2026-08-01', end:'2026-12-01'},
+  {id:'d3',      name:'D3 4000',       note:'1 капс · утром после еды', cat:'vitamin', freq:'daily', start:'2026-08-01', end:'2026-12-01'},
+  {id:'omega',   name:'Ultra Omega 3', note:'1 капс × 2 · с жирной едой', cat:'vitamin', freq:'daily', start:'2026-08-01', end:'2026-11-01'},
+  {id:'bcomplex',name:'B-complex 50',  note:'1 капс · после еды', cat:'vitamin', freq:'daily', start:'2026-08-01', end:'2026-10-01'},
+  {id:'amino',   name:'Amino 75',      note:'1 капс · между приёмами пищи', cat:'vitamin', freq:'daily', start:'2026-08-01', end:'2026-11-01'},
+];
+
+const STORAGE_KEY = 'course-tracker-log-v1';
+
+function loadLog(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  }catch(e){ return {}; }
+}
+function saveLog(log){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(log));
+}
+let LOG = loadLog(); // { itemId: [ 'YYYY-MM-DD', ... ] }
+
+function todayStr(){
+  return new Date().toISOString().slice(0,10);
+}
+function isoWeek(dateStr){
+  const d = new Date(dateStr+'T00:00:00');
+  const day = (d.getDay()+6)%7; // mon=0
+  d.setDate(d.getDate()-day);
+  return d.toISOString().slice(0,10); // monday of that week, used as week key
+}
+function daysBetween(a,b){
+  return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);
+}
+function fmtDate(d){
+  const dt = new Date(d+'T00:00:00');
+  return dt.toLocaleDateString('ru-RU', {day:'numeric', month:'short'});
+}
+function isActive(item, dateStr){
+  return dateStr >= item.start && dateStr <= item.end;
+}
+function isMarked(item, dateStr){
+  const dates = LOG[item.id] || [];
+  if(item.freq === 'weekly'){
+    const wk = isoWeek(dateStr);
+    return dates.some(d => isoWeek(d) === wk);
+  }
+  return dates.includes(dateStr);
+}
+function toggleMark(item, dateStr){
+  if(!LOG[item.id]) LOG[item.id] = [];
+  const dates = LOG[item.id];
+  if(item.freq === 'weekly'){
+    const wk = isoWeek(dateStr);
+    const existingIdx = dates.findIndex(d => isoWeek(d) === wk);
+    if(existingIdx >= 0){ dates.splice(existingIdx,1); }
+    else { dates.push(dateStr); }
+  } else {
+    const idx = dates.indexOf(dateStr);
+    if(idx >= 0) dates.splice(idx,1);
+    else dates.push(dateStr);
+  }
+  saveLog(LOG);
+  renderAll();
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1600);
+}
+
+// ── Today tab ─────────────────────────────────────────────
+function renderToday(){
+  const el = document.getElementById('tab-today');
+  const today = todayStr();
+  const active = ITEMS.filter(i => isActive(i, today));
+  if(active.length === 0){
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🌿</div>Сегодня курс ещё не начался<br>или уже завершён</div>`;
+    return;
+  }
+  const daily = active.filter(i => i.freq === 'daily');
+  const weekly = active.filter(i => i.freq === 'weekly');
+  let html = '';
+  if(daily.length){
+    html += `<div class="section-label">Ежедневно</div>`;
+    daily.forEach(i => {
+      const done = isMarked(i, today);
+      html += `
+      <div class="card"><div class="card-row">
+        <div class="check ${done?'done':''}" onclick="toggleMark(ITEMS.find(x=>x.id==='${i.id}'), '${today}')">${done?'✓':''}</div>
+        <div class="card-body">
+          <div class="card-title">${i.name}</div>
+          <div class="card-sub">${i.note}</div>
+        </div>
+      </div></div>`;
+    });
+  }
+  if(weekly.length){
+    html += `<div class="section-label">Раз в неделю</div>`;
+    weekly.forEach(i => {
+      const done = isMarked(i, today);
+      html += `
+      <div class="card"><div class="card-row">
+        <div class="card-body">
+          <div class="card-title">${i.name}</div>
+          <div class="card-sub">${i.note}</div>
+        </div>
+        <div class="weekly-btn ${done?'done':''}" onclick="toggleMark(ITEMS.find(x=>x.id==='${i.id}'), '${today}')">${done?'Сделано':'Отметить'}</div>
+      </div></div>`;
+    });
+  }
+  el.innerHTML = html;
+}
+
+// ── Progress tab ──────────────────────────────────────────
+function renderProgress(){
+  const el = document.getElementById('tab-progress');
+  const today = todayStr();
+  let html = '';
+  ITEMS.forEach(i => {
+    const totalDays = daysBetween(i.start, i.end);
+    const totalUnits = i.freq === 'weekly' ? Math.ceil(totalDays/7) : totalDays;
+    const dates = LOG[i.id] || [];
+    let doneUnits;
+    if(i.freq === 'weekly'){
+      const weeks = new Set(dates.map(d => isoWeek(d)));
+      doneUnits = weeks.size;
+    } else {
+      doneUnits = new Set(dates).size;
+    }
+    const elapsed = Math.min(Math.max(daysBetween(i.start, today), 0), totalDays);
+    const status = today < i.start ? 'ещё не начат' : (today > i.end ? 'завершён' : `осталось ${daysBetween(today, i.end)} дн.`);
+    const amberClass = i.cat === 'shampoo' && i.freq === 'weekly' ? 'amber' : '';
+    let pills = '';
+    for(let n=0; n<totalUnits; n++){
+      const filled = n < doneUnits;
+      pills += `<div class="pill ${filled?'filled':''} ${filled?amberClass:''}"></div>`;
+    }
+    html += `
+    <div class="prog-card">
+      <div class="prog-head">
+        <div class="prog-title">${i.name}</div>
+        <div class="prog-frac">${doneUnits}/${totalUnits}</div>
+      </div>
+      <div class="blister">${pills}</div>
+      <div class="prog-sub">${fmtDate(i.start)} — ${fmtDate(i.end)} · ${status}</div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+// ── Journal tab ───────────────────────────────────────────
+function renderJournal(){
+  const el = document.getElementById('tab-journal');
+  const allEntries = [];
+  ITEMS.forEach(i => {
+    (LOG[i.id]||[]).forEach(d => allEntries.push({date:d, item:i}));
+  });
+  if(allEntries.length === 0){
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📋</div>Пока нет отметок</div>`;
+    return;
+  }
+  allEntries.sort((a,b)=> b.date.localeCompare(a.date));
+  const byDate = {};
+  allEntries.forEach(e => {
+    if(!byDate[e.date]) byDate[e.date] = [];
+    byDate[e.date].push(e.item);
+  });
+  let html = '';
+  Object.keys(byDate).sort((a,b)=>b.localeCompare(a)).forEach(date => {
+    html += `<div class="journal-day"><div class="journal-date">${fmtDate(date)}</div>`;
+    byDate[date].forEach(i => {
+      const dotClass = i.freq==='weekly' ? 'amber' : '';
+      html += `
+      <div class="journal-item">
+        <div class="journal-dot ${dotClass}"></div>
+        <div class="journal-text">${i.name}</div>
+        <div class="journal-del" onclick="toggleMark(ITEMS.find(x=>x.id==='${i.id}'), '${date}')">✕</div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  el.innerHTML = html;
+}
+
+// ── Tabs ──────────────────────────────────────────────────
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector(`[data-tab="${name}"]`).classList.add('active');
+  ['today','progress','journal'].forEach(t=>{
+    document.getElementById(`tab-${t}`).style.display = t===name ? '' : 'none';
+  });
+  renderAll();
+}
+function renderAll(){
+  const activeTab = document.querySelector('.tab.active').dataset.tab;
+  if(activeTab === 'today') renderToday();
+  if(activeTab === 'progress') renderProgress();
+  if(activeTab === 'journal') renderJournal();
+}
+
+// ── Backup / restore ──────────────────────────────────────
+function exportData(){
+  const blob = new Blob([JSON.stringify(LOG, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `course-tracker-${todayStr()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Файл сохранён');
+}
+function importData(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const parsed = JSON.parse(e.target.result);
+      LOG = parsed;
+      saveLog(LOG);
+      renderAll();
+      showToast('Данные восстановлены');
+    }catch(err){
+      showToast('Не удалось прочитать файл');
+    }
+  };
+  reader.readAsText(file);
+  evt.target.value = '';
+}
+
+// ── Init ──────────────────────────────────────────────────
+renderAll();
+</script>
+</body>
+</html>

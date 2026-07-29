@@ -1,0 +1,18 @@
+{
+  "name": "Курс — трекер приёма",
+  "short_name": "Курс",
+  "description": "Трекер шампуней и витаминов по курсу",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FAF7F2",
+  "theme_color": "#FAF7F2",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%235E7F62'/%3E%3Ctext y='128' x='96' font-size='90' font-family='serif' font-weight='700' fill='white' text-anchor='middle'%3ERx%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}
