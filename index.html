@@ -177,6 +177,30 @@ body{
   font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;
 }
 .toast.show{opacity:1;}
+
+.start-wrap{
+  height:100%;display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.start-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:18px;
+  padding:32px 24px;text-align:center;max-width:340px;width:100%;
+}
+.start-icon{font-size:38px;margin-bottom:14px;}
+.start-title{font-family:'Fraunces',serif;font-size:20px;font-weight:700;margin-bottom:6px;}
+.start-sub{font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.4;}
+.start-input{
+  width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--border);
+  font-family:'Inter',sans-serif;font-size:15px;color:var(--ink);background:var(--surface2);
+  margin-bottom:16px;
+}
+.start-btn{
+  width:100%;padding:13px;border-radius:10px;border:none;background:var(--sage);
+  color:#fff;font-weight:600;font-size:15px;cursor:pointer;
+}
+.start-btn:active{background:#4C6B50;}
+.start-cancel{
+  margin-top:12px;font-size:12px;color:var(--muted);cursor:pointer;
+}
 </style>
 </head>
 <body>
@@ -185,25 +209,39 @@ body{
   <div class="mark">Rx</div>
   <div class="header-info">
     <h1>Курс</h1>
-    <p id="dateRange">1 авг — 1 дек 2026</p>
+    <p id="dateRange">не начат</p>
   </div>
   <div class="header-actions">
+    <div class="icon-btn" onclick="openStartEdit()" title="Дата старта">🗓</div>
     <div class="icon-btn" onclick="exportData()" title="Экспорт">⤓</div>
     <label class="icon-btn" for="importFile" title="Импорт">⤒</label>
     <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)">
   </div>
 </div>
 
-<div class="tabs">
+<div class="tabs" id="tabsBar">
   <div class="tab active" data-tab="today" onclick="switchTab('today')">Сегодня</div>
   <div class="tab" data-tab="progress" onclick="switchTab('progress')">Курс</div>
   <div class="tab" data-tab="journal" onclick="switchTab('journal')">Журнал</div>
 </div>
 
-<div class="content">
+<div class="content" id="mainContent">
   <div class="section" id="tab-today"></div>
   <div class="section" id="tab-progress" style="display:none"></div>
   <div class="section" id="tab-journal" style="display:none"></div>
+</div>
+
+<div class="content" id="startScreen" style="display:none">
+  <div class="start-wrap">
+    <div class="start-card">
+      <div class="start-icon">🌿</div>
+      <div class="start-title">Начать курс</div>
+      <div class="start-sub">Выберите дату старта — все сроки окончания посчитаются автоматически</div>
+      <input type="date" id="startDateInput" class="start-input">
+      <button class="start-btn" onclick="startCourse()">Начать курс</button>
+      <div class="start-cancel" id="startCancelBtn" style="display:none" onclick="cancelStartEdit()">Отмена</div>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -211,13 +249,13 @@ body{
 <script>
 // ── Course definition ──────────────────────────────────────
 const ITEMS = [
-  {id:'aroma',   name:'Aroma SE',      note:'раз в неделю', cat:'shampoo', freq:'weekly', start:'2026-08-01', end:'2026-12-01'},
-  {id:'pirolam', name:'Pirolam',       note:'раз в неделю', cat:'shampoo', freq:'weekly', start:'2026-08-01', end:'2026-12-01'},
-  {id:'dsd',     name:'DSD',          note:'раз в день',   cat:'shampoo', freq:'daily',  start:'2026-08-01', end:'2026-12-01'},
-  {id:'d3',      name:'D3 4000',       note:'1 капс · утром после еды', cat:'vitamin', freq:'daily', start:'2026-08-01', end:'2026-12-01'},
-  {id:'omega',   name:'Ultra Omega 3', note:'1 капс × 2 · с жирной едой', cat:'vitamin', freq:'daily', start:'2026-08-01', end:'2026-11-01'},
-  {id:'bcomplex',name:'B-complex 50',  note:'1 капс · после еды', cat:'vitamin', freq:'daily', start:'2026-08-01', end:'2026-10-01'},
-  {id:'amino',   name:'Amino 75',      note:'1 капс · между приёмами пищи', cat:'vitamin', freq:'daily', start:'2026-08-01', end:'2026-11-01'},
+  {id:'aroma',   name:'Aroma SE',      note:'раз в неделю', cat:'shampoo', freq:'weekly', months:4},
+  {id:'pirolam', name:'Pirolam',       note:'раз в неделю', cat:'shampoo', freq:'weekly', months:4},
+  {id:'dsd',     name:'DSD',          note:'раз в день',   cat:'shampoo', freq:'daily',  months:4},
+  {id:'d3',      name:'D3 4000',       note:'1 капс · утром после еды', cat:'vitamin', freq:'daily', months:4},
+  {id:'omega',   name:'Ultra Omega 3', note:'1 капс × 2 · с жирной едой', cat:'vitamin', freq:'daily', months:3},
+  {id:'bcomplex',name:'B-complex 50',  note:'1 капс · после еды', cat:'vitamin', freq:'daily', months:2},
+  {id:'amino',   name:'Amino 75',      note:'1 капс · между приёмами пищи', cat:'vitamin', freq:'daily', months:3},
 ];
 
 const STORAGE_KEY = 'course-tracker-log-v1';
@@ -232,6 +270,11 @@ function saveLog(log){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(log));
 }
 let LOG = loadLog(); // { itemId: [ 'YYYY-MM-DD', ... ] }
+
+const START_KEY = 'course-tracker-start-v1';
+function loadStart(){ return localStorage.getItem(START_KEY); }
+function saveStart(dateStr){ localStorage.setItem(START_KEY, dateStr); }
+let COURSE_START = loadStart(); // null until user starts the course
 
 function todayStr(){
   return new Date().toISOString().slice(0,10);
@@ -250,27 +293,69 @@ function fmtDateLong(d){
   if(isYesterday) return 'Вчера, ' + dt.toLocaleDateString('ru-RU', {day:'numeric', month:'long'});
   return dt.toLocaleDateString('ru-RU', {weekday:'short', day:'numeric', month:'long'});
 }
-function isoWeek(dateStr){
-  const d = new Date(dateStr+'T00:00:00');
-  const day = (d.getDay()+6)%7; // mon=0
-  d.setDate(d.getDate()-day);
-  return d.toISOString().slice(0,10); // monday of that week, used as week key
-}
 function daysBetween(a,b){
   return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);
+}
+function addMonths(dateStr, months){
+  const d = new Date(dateStr+'T00:00:00');
+  d.setMonth(d.getMonth()+months);
+  return d.toISOString().slice(0,10);
+}
+// how many days the item's course is meant to run, given a start date
+function requiredDays(item, start){
+  return daysBetween(start, addMonths(start, item.months));
+}
+// span of one "unit" in days: 1 for daily items, 7 for weekly items
+function unitSpan(item){ return item.freq === 'weekly' ? 7 : 1; }
+// which unit-block a given date falls into, relative to start
+function unitIndex(item, start, dateStr){
+  return Math.floor(daysBetween(start, dateStr) / unitSpan(item));
+}
+// calendar end date if every unit were completed on schedule, no misses
+function baseEnd(item, start){
+  return shiftDate(addMonths(start, item.months), -1);
+}
+// core projection: how many units are required/done, and the resulting
+// (possibly pushed-back) end date given actual adherence so far
+function computeProjection(item, start){
+  const today = todayStr();
+  const span = unitSpan(item);
+  const reqDays = requiredDays(item, start);
+  const reqUnits = item.freq === 'weekly' ? Math.ceil(reqDays/span) : reqDays;
+  const marks = (LOG[item.id] || []).filter(d => d >= start);
+  const doneSet = new Set(marks.map(d => unitIndex(item, start, d)));
+  const doneUnits = doneSet.size;
+  const remaining = Math.max(0, reqUnits - doneUnits);
+  const curUnit = Math.max(0, unitIndex(item, start, today));
+  const todayUnitMarked = doneSet.has(curUnit);
+  const nextUnit = todayUnitMarked ? curUnit + 1 : curUnit;
+  let projectedEnd;
+  if(remaining > 0){
+    const lastUnit = nextUnit + remaining - 1;
+    projectedEnd = shiftDate(shiftDate(start, lastUnit*span), span-1);
+  } else {
+    let lastUnit = -1;
+    doneSet.forEach(u => { if(u > lastUnit) lastUnit = u; });
+    projectedEnd = lastUnit >= 0 ? shiftDate(shiftDate(start, lastUnit*span), span-1) : shiftDate(start, -1);
+  }
+  return {reqUnits, doneUnits, remaining, projectedEnd, base: baseEnd(item, start)};
 }
 function fmtDate(d){
   const dt = new Date(d+'T00:00:00');
   return dt.toLocaleDateString('ru-RU', {day:'numeric', month:'short'});
 }
 function isActive(item, dateStr){
-  return dateStr >= item.start && dateStr <= item.end;
+  if(!COURSE_START) return false;
+  if(dateStr < COURSE_START) return false;
+  const proj = computeProjection(item, COURSE_START);
+  return dateStr <= proj.projectedEnd;
 }
 function isMarked(item, dateStr){
+  if(!COURSE_START) return false;
   const dates = LOG[item.id] || [];
   if(item.freq === 'weekly'){
-    const wk = isoWeek(dateStr);
-    return dates.some(d => isoWeek(d) === wk);
+    const target = unitIndex(item, COURSE_START, dateStr);
+    return dates.some(d => unitIndex(item, COURSE_START, d) === target);
   }
   return dates.includes(dateStr);
 }
@@ -278,8 +363,8 @@ function toggleMark(item, dateStr){
   if(!LOG[item.id]) LOG[item.id] = [];
   const dates = LOG[item.id];
   if(item.freq === 'weekly'){
-    const wk = isoWeek(dateStr);
-    const existingIdx = dates.findIndex(d => isoWeek(d) === wk);
+    const target = unitIndex(item, COURSE_START, dateStr);
+    const existingIdx = dates.findIndex(d => unitIndex(item, COURSE_START, d) === target);
     if(existingIdx >= 0){ dates.splice(existingIdx,1); }
     else { dates.push(dateStr); }
   } else {
@@ -363,32 +448,28 @@ function renderProgress(){
   const today = todayStr();
   let html = '';
   ITEMS.forEach(i => {
-    const totalDays = daysBetween(i.start, i.end);
-    const totalUnits = i.freq === 'weekly' ? Math.ceil(totalDays/7) : totalDays;
-    const dates = LOG[i.id] || [];
-    let doneUnits;
-    if(i.freq === 'weekly'){
-      const weeks = new Set(dates.map(d => isoWeek(d)));
-      doneUnits = weeks.size;
-    } else {
-      doneUnits = new Set(dates).size;
-    }
-    const elapsed = Math.min(Math.max(daysBetween(i.start, today), 0), totalDays);
-    const status = today < i.start ? 'ещё не начат' : (today > i.end ? 'завершён' : `осталось ${daysBetween(today, i.end)} дн.`);
+    const proj = computeProjection(i, COURSE_START);
     const amberClass = i.cat === 'shampoo' && i.freq === 'weekly' ? 'amber' : '';
     let pills = '';
-    for(let n=0; n<totalUnits; n++){
-      const filled = n < doneUnits;
+    for(let n=0; n<proj.reqUnits; n++){
+      const filled = n < proj.doneUnits;
       pills += `<div class="pill ${filled?'filled':''} ${filled?amberClass:''}"></div>`;
     }
+    const status = today < COURSE_START
+      ? 'ещё не начат'
+      : (today > proj.projectedEnd ? 'завершён' : `осталось ${daysBetween(today, proj.projectedEnd)} дн.`);
+    const shifted = proj.projectedEnd > proj.base;
+    const shiftBadge = shifted
+      ? `<span style="color:var(--danger);font-weight:600;"> · сдвинут на ${daysBetween(proj.base, proj.projectedEnd)} дн. (пропуски)</span>`
+      : '';
     html += `
     <div class="prog-card">
       <div class="prog-head">
         <div class="prog-title">${i.name}</div>
-        <div class="prog-frac">${doneUnits}/${totalUnits}</div>
+        <div class="prog-frac">${proj.doneUnits}/${proj.reqUnits}</div>
       </div>
       <div class="blister">${pills}</div>
-      <div class="prog-sub">${fmtDate(i.start)} — ${fmtDate(i.end)} · ${status}</div>
+      <div class="prog-sub">${fmtDate(COURSE_START)} — ${fmtDate(proj.projectedEnd)} · ${status}${shiftBadge}</div>
     </div>`;
   });
   el.innerHTML = html;
@@ -474,8 +555,49 @@ function importData(evt){
   evt.target.value = '';
 }
 
+// ── Start course ────────────────────────────────────────────
+function openStartEdit(){
+  document.getElementById('startDateInput').value = COURSE_START || todayStr();
+  document.getElementById('startCancelBtn').style.display = COURSE_START ? '' : 'none';
+  document.getElementById('tabsBar').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'none';
+  document.getElementById('startScreen').style.display = '';
+}
+function cancelStartEdit(){
+  renderShell();
+}
+function startCourse(){
+  const val = document.getElementById('startDateInput').value;
+  if(!val){ showToast('Выберите дату'); return; }
+  COURSE_START = val;
+  saveStart(val);
+  showToast('Курс начат — погнали 🌿');
+  renderShell();
+}
+function renderShell(){
+  const tabsBar = document.getElementById('tabsBar');
+  const mainContent = document.getElementById('mainContent');
+  const startScreen = document.getElementById('startScreen');
+  const dateRangeEl = document.getElementById('dateRange');
+  if(!COURSE_START){
+    tabsBar.style.display = 'none';
+    mainContent.style.display = 'none';
+    startScreen.style.display = '';
+    document.getElementById('startDateInput').value = todayStr();
+    document.getElementById('startCancelBtn').style.display = 'none';
+    dateRangeEl.textContent = 'не начат';
+  } else {
+    tabsBar.style.display = '';
+    mainContent.style.display = '';
+    startScreen.style.display = 'none';
+    currentViewDate = todayStr();
+    dateRangeEl.textContent = 'старт ' + fmtDate(COURSE_START);
+    renderAll();
+  }
+}
+
 // ── Init ──────────────────────────────────────────────────
-renderAll();
+renderShell();
 </script>
 </body>
 </html>
